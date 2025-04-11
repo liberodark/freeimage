@@ -366,6 +366,10 @@ static void
 ReadPalette(TIFF *tiff, uint16_t photometric, uint16_t bitspersample, FIBITMAP *dib) {
 	RGBQUAD *pal = FreeImage_GetPalette(dib);
 
+	if (!pal) {
+	  return;
+	}
+
 	switch(photometric) {
 		case PHOTOMETRIC_MINISBLACK:	// bitmap and greyscale image types
 		case PHOTOMETRIC_MINISWHITE:
@@ -1474,6 +1478,12 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				(int)bitspersample, (int)samplesperpixel, (int)photometric);
 			throw (char*)NULL;
 		}
+		if (planar_config == PLANARCONFIG_SEPARATE && bitspersample < 8) {
+			FreeImage_OutputMessageProc(s_format_id,
+				"Unable to handle this format: bitspersample = 8, TIFFTAG_PLANARCONFIG = PLANARCONFIG_SEPARATE"
+			);
+			throw (char*)NULL;
+		}
 
 		// ---------------------------------------------------------------------------------
 
@@ -2131,6 +2141,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				unsigned dst_pitch = FreeImage_GetPitch(dib);
 				uint32_t tileRowSize = (uint32_t)TIFFTileRowSize(tif);
 				uint32_t imageRowSize = (uint32_t)TIFFScanlineSize(tif);
+
+				if (width / tileWidth * tileRowSize * 8 > bitspersample * samplesperpixel * width) {
+				  free(tileBuffer);
+				  throw "Corrupted tiled TIFF file";
+				}
 
 
 				// In the tiff file the lines are saved from up to down 

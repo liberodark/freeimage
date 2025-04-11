@@ -301,6 +301,9 @@ LoadStandardIcon(FreeImageIO *io, fi_handle handle, int flags, BOOL header_only)
 	int width  = bmih.biWidth;
 	int height = bmih.biHeight / 2; // height == xor + and mask
 	unsigned bit_count = bmih.biBitCount;
+	if (bit_count != 1 && bit_count != 2 && bit_count != 4 && bit_count != 8 && bit_count != 16 && bit_count != 24 && bit_count != 32) {
+	  return NULL;
+	}
 	unsigned line   = CalculateLine(width, bit_count);
 	unsigned pitch  = CalculatePitch(line);
 
